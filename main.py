@@ -20,8 +20,8 @@ def is_url(s: str) -> bool:
 
 def parse_github(url: str):
     """
-    Retourne (owner, repo) ou (None, None) si pas GitHub.
-    Accepte https://github.com/owner/repo ou .../owner/repo.git
+    Returns (owner, repo) or (None, None) if not GitHub.
+    Accepts https://github.com/owner/repo or .../owner/repo.git
     """
     try:
         u = urlparse(url)
@@ -38,7 +38,7 @@ def parse_github(url: str):
         return None, None
 
 def current_branch(repo_root: str, fallback: str = "main") -> str:
-    # Essaie de déterminer la branche courante (utile pour les liens GitHub /blob/<branch>/path)
+    # Try to determine the current branch (useful for GitHub /blob/<branch>/path links)
     for cmd in [
         ["git", "symbolic-ref", "--short", "HEAD"],
         ["git", "rev-parse", "--abbrev-ref", "HEAD"],
@@ -53,12 +53,12 @@ def current_branch(repo_root: str, fallback: str = "main") -> str:
 
 def find_readmes(root: str):
     """
-    Retourne une liste de dicts: {
-        'project': "." si README à la racine, sinon nom du dossier parent,
-        'rel_path': chemin relatif du README,
-        'size_bytes': taille en octets,
-        'abs_path': chemin absolu,
-        'depth': profondeur (0 = racine)
+    Returns a list of dicts: {
+        'project': "." if README at root, otherwise parent folder name,
+        'rel_path': relative path of README,
+        'size_bytes': file size in bytes,
+        'abs_path': absolute path,
+        'depth': depth (0 = root)
     }
     """
     rows = []
@@ -70,7 +70,7 @@ def find_readmes(root: str):
                 parent_dir_path = os.path.dirname(full_path)
                 parent_base = os.path.basename(parent_dir_path)
 
-                # Project = "." si README à la racine, sinon dossier parent
+                # Project = "." if README at root, otherwise parent folder
                 is_root = rel_path.lower() == "readme.md"
                 project_name = "." if is_root else (parent_base if parent_base else ".")
 
@@ -84,15 +84,15 @@ def find_readmes(root: str):
                     "abs_path": full_path,
                     "depth": depth,
                 })
-    # tri: profondeur croissante, puis chemin
+    # sort: increasing depth, then path
     rows.sort(key=lambda r: (r["depth"], r["rel_path"].lower()))
     return rows
 
 def build_readme_link(item, repo_arg: str, repo_root: str, branch_hint: str) -> str:
     """
-    Construit l'URL cliquable vers le README.
-    - Si repo_arg est GitHub, lien vers https://github.com/<owner>/<repo>/blob/<branch>/<rel_path>
-    - Sinon, lien file:// absolu (URL-encodé)
+    Build the clickable URL to the README.
+    - If repo_arg is GitHub, link to https://github.com/<owner>/<repo>/blob/<branch>/<rel_path>
+    - Otherwise, link file:// absolute (URL-encoded)
     """
     owner, repo = parse_github(repo_arg) if is_url(repo_arg) else (None, None)
     rel_path = item["rel_path"].replace("\\", "/")
@@ -103,7 +103,7 @@ def build_readme_link(item, repo_arg: str, repo_root: str, branch_hint: str) -> 
     return f"file://{quote(abspath)}"
 
 def generate_html(rows, output_path: str, title: str, repo_arg: str, repo_root: str, branch_hint: str):
-    # HTML minimal + un peu de style
+    # Minimal HTML + some CSS
     head = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -157,8 +157,8 @@ def generate_html(rows, output_path: str, title: str, repo_arg: str, repo_root: 
 
 def generate_csv(rows, csv_path: str, repo_arg: str, repo_root: str, branch_hint: str):
     """
-    Écrit un CSV avec colonnes:
-    index,project,readme_url,size_bytes  (index 1→N)
+    Write a CSV with columns:
+    index, project, readme_url, size_bytes  (index 1→N)
     """
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
